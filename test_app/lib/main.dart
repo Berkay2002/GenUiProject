@@ -4,14 +4,17 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:test_app/src/providers/chat_provider.dart';
 import 'package:test_app/src/widgets/message_bubbles.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'package:test_app/firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const GenChatApp());
 }
 
 class GenChatApp extends StatelessWidget {
-  const GenChatApp({
-    super.key,
-  });
+  const GenChatApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +42,7 @@ class GenChatApp extends StatelessWidget {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({
-    super.key,
-  });
+  const ChatScreen({super.key});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -60,8 +61,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() {
     if (_textController.text.isNotEmpty) {
-      Provider.of<ChatProvider>(context, listen: false)
-          .sendMessage(_textController.text);
+      Provider.of<ChatProvider>(
+        context,
+        listen: false,
+      ).sendMessage(_textController.text);
       _textController.clear();
       _scrollToBottom();
     }
