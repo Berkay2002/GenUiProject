@@ -40,16 +40,6 @@ class UserMessageBubble extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          ShadAvatar(
-            '',
-            placeholder: Icon(
-              Icons.person,
-              color: theme.colorScheme.primaryForeground,
-            ),
-            size: const Size(32, 32),
-            backgroundColor: theme.colorScheme.primary,
-          ),
         ],
       ),
     );
@@ -70,17 +60,6 @@ class AiMessageBubble extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ShadAvatar(
-            '',
-            placeholder: Icon(
-              Icons.auto_awesome,
-              size: 16,
-              color: theme.colorScheme.primaryForeground,
-            ),
-            size: const Size(32, 32),
-            backgroundColor: theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 12),
           Flexible(
             child: message.type == MessageType.text
                 ? Container(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen_ui/flutter_gen_ui.dart';
@@ -21,6 +22,9 @@ class ChatProvider with ChangeNotifier {
     _model = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-3-pro-preview',
       generationConfig: GenerationConfig(temperature: 1.0),
+      tools: [
+        Tool.googleSearch(), // Enable Google Search grounding for real image URLs
+      ],
     );
   }
 
@@ -28,9 +32,15 @@ class ChatProvider with ChangeNotifier {
     You are a UI Generation Engine. You do not answer with text. You answer ONLY with JSON.
     If the user asks for a comparison, generate a 'carousel'.
     If the user asks for a process/history, generate a 'timeline'.
+    
+    IMPORTANT: Use Google Search to find REAL, valid image URLs for the items. Do not make up URLs.
+    Provide complete, detailed descriptions (at least 2-3 sentences per item).
+    
     Use this schema: {"component": {"type": "carousel|timeline", "id": "unique_id", "config": {"theme": "dark|light", "speed": 1.0}, "data": [{"id": "item_id", "title": "", "description": "", "imageUrl": ""}]} } """;
 
   Future<void> sendMessage(String text) async {
+    dev.log('📤 Sending message to AI: "$text"', name: 'ChatProvider');
+
     _messages.add(
       ChatMessage(
         id: const Uuid().v4(),
@@ -45,11 +55,17 @@ class ChatProvider with ChangeNotifier {
     try {
       final content = [Content.text(_systemInstruction + text)];
 
-      // Add timeout to detect slow responses (60 seconds for Gemini 3 Pro)
+      dev.log(
+        '🤖 Requesting AI response with Google Search enabled...',
+        name: 'ChatProvider',
+      );
+      final startTime = DateTime.now();
+
+      // Add timeout to detect slow responses (120 seconds for Gemini 3 Pro)
       final response = await _model
           .generateContent(content)
           .timeout(
-            const Duration(seconds: 60),
+            const Duration(seconds: 120),
             onTimeout: () {
               throw TimeoutException(
                 'The AI is taking longer than expected to respond. Please try again.',
@@ -57,8 +73,30 @@ class ChatProvider with ChangeNotifier {
             },
           );
 
+      final duration = DateTime.now().difference(startTime);
+      dev.log(
+        '✅ AI response received in ${duration.inSeconds}s',
+        name: 'ChatProvider',
+      );
+
+      // Log if Google Search was used
+      if (response.candidates.isNotEmpty) {
+        final candidate = response.candidates.first;
+        if (candidate.groundingMetadata != null) {
+          dev.log(
+            '🔍 Google Search was used for grounding',
+            name: 'ChatProvider',
+          );
+          dev.log(
+            '   Search queries: ${candidate.groundingMetadata?.searchEntryPoint?.renderedContent ?? "N/A"}',
+            name: 'ChatProvider',
+          );
+        }
+      }
+
       _handleResponse(response);
     } catch (e) {
+      dev.log('❌ Error: $e', name: 'ChatProvider', error: e);
       _handleError(e);
     }
   }
@@ -101,21 +139,22 @@ class ChatProvider with ChangeNotifier {
   void _handleResponse(GenerateContentResponse response) {
     final text = response.text;
     if (text == null) {
-      _messages.add(
-        ChatMessage(
-          id: const Uuid().v4(),
-          text: "Error: Empty response from AI",
-          isUserMessage: false,
-          type: MessageType.text,
-        ),
-      );
-      _status = ChatStatus.idle;
-      notifyListeners();
+      dev.log('⚠️ Empty response from AI', name: 'ChatProvider');
+      _handleError('No response from AI');
       return;
     }
 
+    dev.log('📝 Raw AI response: $text', name: 'ChatProvider');
+
     try {
+      dev.log('🔄 Parsing JSON to UI component...', name: 'ChatProvider');
       final uiComponent = GenUiParser.parse(text);
+
+      dev.log(
+        '✨ Successfully created ${uiComponent.type} component with ${uiComponent.data.length} items',
+        name: 'ChatProvider',
+      );
+
       _messages.add(
         ChatMessage(
           id: const Uuid().v4(),
@@ -125,6 +164,11 @@ class ChatProvider with ChangeNotifier {
         ),
       );
     } catch (e) {
+      dev.log(
+        '❌ Failed to parse UI component: $e',
+        name: 'ChatProvider',
+        error: e,
+      );
       _messages.add(
         ChatMessage(
           id: const Uuid().v4(),

@@ -13,6 +13,7 @@ dependencies:
   flutter_animate: ^4.5.2
   cached_network_image: ^3.4.1
   json_annotation: ^4.9.0
+  shadcn_ui: ^0.39.9
 
 dev_dependencies:
   flutter_test:
