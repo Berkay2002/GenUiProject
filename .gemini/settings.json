@@ -1,0 +1,15 @@
+{
+  "ui": {
+    "hideTips": true,
+    "footer": {
+      "hideSandboxStatus": true,
+      "hideCWD": false
+    }
+  },
+  "general": {
+    "previewFeatures": true
+  },
+  "ide": {
+    "enabled": true
+  }
+}

@@ -18,7 +18,7 @@ class ChatProvider with ChangeNotifier {
   ChatStatus get status => _status;
 
   final GenerativeModel _model = GenerativeModel(
-    model: 'gemini-pro',
+    model: 'gemini-3-pro-preview',
     apiKey: geminiApiKey,
   );
 
