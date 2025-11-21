@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:test_app/src/providers/chat_provider.dart';
 import 'package:test_app/src/widgets/message_bubbles.dart';
 
@@ -16,13 +17,22 @@ class GenChatApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => ChatProvider(),
-      child: MaterialApp(
-        title: 'GenChat',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
+      child: ShadApp.custom(
+        themeMode: ThemeMode.dark,
+        darkTheme: ShadThemeData(
+          brightness: Brightness.dark,
+          colorScheme: const ShadSlateColorScheme.dark(),
         ),
-        home: const ChatScreen(),
+        appBuilder: (context) {
+          return MaterialApp(
+            title: 'GenChat',
+            theme: Theme.of(context),
+            home: const ChatScreen(),
+            builder: (context, child) {
+              return ShadAppBuilder(child: child!);
+            },
+          );
+        },
       ),
     );
   }
