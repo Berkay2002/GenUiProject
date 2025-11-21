@@ -1,0 +1,12 @@
+# Flutter specific ignores
+.dart_tool/
+.idea/
+build/
+generated/
+android/
+ios/
+linux/
+macos/
+web/
+windows/
+pubspec.lock

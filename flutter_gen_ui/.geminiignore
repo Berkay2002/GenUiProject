@@ -1,0 +1,6 @@
+# Flutter specific ignores
+.dart_tool/
+.idea/
+build/
+generated/
+pubspec.lock
