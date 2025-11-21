@@ -5,14 +5,17 @@ import 'package:flutter_gen_ui/src/models/gen_component_type.dart';
 
 part 'carousel_component.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 @immutable
 class CarouselComponent extends GenComponent {
-  const CarouselComponent({
+  final List<CarouselItem> items;
+
+  CarouselComponent({
     required super.id,
     super.config,
     required super.data,
-  }) : super(type: GenComponentType.carousel);
+  })  : items = data.map((e) => CarouselItem.fromJson(e)).toList(),
+        super(type: GenComponentType.carousel);
 
   factory CarouselComponent.fromJson(Map<String, dynamic> json) =>
       _$CarouselComponentFromJson(json);
@@ -24,11 +27,13 @@ class CarouselComponent extends GenComponent {
 @JsonSerializable()
 @immutable
 class CarouselItem extends GenComponentItem {
+  final String id;
   final String title;
   final String description;
   final String imageUrl;
 
   const CarouselItem({
+    required this.id,
     required this.title,
     required this.description,
     required this.imageUrl,

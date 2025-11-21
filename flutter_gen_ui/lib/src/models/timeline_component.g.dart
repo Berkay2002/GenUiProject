@@ -23,12 +23,16 @@ Map<String, dynamic> _$TimelineComponentToJson(TimelineComponent instance) =>
     };
 
 TimelineItem _$TimelineItemFromJson(Map<String, dynamic> json) => TimelineItem(
+  id: json['id'] as String,
   title: json['title'] as String,
   description: json['description'] as String,
+  isCompleted: json['isCompleted'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$TimelineItemToJson(TimelineItem instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'title': instance.title,
       'description': instance.description,
+      'isCompleted': instance.isCompleted,
     };

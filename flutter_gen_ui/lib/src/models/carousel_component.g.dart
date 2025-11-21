@@ -23,6 +23,7 @@ Map<String, dynamic> _$CarouselComponentToJson(CarouselComponent instance) =>
     };
 
 CarouselItem _$CarouselItemFromJson(Map<String, dynamic> json) => CarouselItem(
+  id: json['id'] as String,
   title: json['title'] as String,
   description: json['description'] as String,
   imageUrl: json['imageUrl'] as String,
@@ -30,6 +31,7 @@ CarouselItem _$CarouselItemFromJson(Map<String, dynamic> json) => CarouselItem(
 
 Map<String, dynamic> _$CarouselItemToJson(CarouselItem instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'title': instance.title,
       'description': instance.description,
       'imageUrl': instance.imageUrl,
