@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen_ui/flutter_gen_ui.dart';
 import 'package:firebase_ai/firebase_ai.dart';
@@ -18,6 +20,7 @@ class ChatProvider with ChangeNotifier {
   ChatProvider() {
     _model = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-3-pro-preview',
+      generationConfig: GenerationConfig(temperature: 1.0),
     );
   }
 
@@ -41,20 +44,58 @@ class ChatProvider with ChangeNotifier {
 
     try {
       final content = [Content.text(_systemInstruction + text)];
-      final response = await _model.generateContent(content);
+
+      // Add timeout to detect slow responses (60 seconds for Gemini 3 Pro)
+      final response = await _model
+          .generateContent(content)
+          .timeout(
+            const Duration(seconds: 60),
+            onTimeout: () {
+              throw TimeoutException(
+                'The AI is taking longer than expected to respond. Please try again.',
+              );
+            },
+          );
+
       _handleResponse(response);
     } catch (e) {
-      _messages.add(
-        ChatMessage(
-          id: const Uuid().v4(),
-          text: "Error: $e",
-          isUserMessage: false,
-          type: MessageType.text,
-        ),
-      );
-      _status = ChatStatus.idle;
-      notifyListeners();
+      _handleError(e);
     }
+  }
+
+  void _handleError(dynamic error) {
+    String userMessage;
+
+    // Check for specific error types and provide user-friendly messages
+    if (error.toString().contains('SocketException') ||
+        error.toString().contains('Connection timed out')) {
+      userMessage =
+          '🌐 Network Error\n\nCouldn\'t connect to the AI service. Please check your internet connection and try again.';
+    } else if (error.toString().contains('TimeoutException')) {
+      userMessage =
+          '⏱️ Request Timeout\n\nThe AI took too long to respond. This might be due to:\n• Network issues\n• Server overload\n\nPlease try again in a moment.';
+    } else if (error.toString().contains('API key')) {
+      userMessage =
+          '🔑 API Key Error\n\nThere\'s an issue with the API configuration. Please check your Firebase setup.';
+    } else if (error.toString().contains('quota') ||
+        error.toString().contains('rate limit')) {
+      userMessage =
+          '📊 Rate Limit Exceeded\n\nYou\'ve reached the API usage limit. Please try again later.';
+    } else {
+      userMessage =
+          '❌ Something went wrong\n\n${error.toString()}\n\nPlease try again.';
+    }
+
+    _messages.add(
+      ChatMessage(
+        id: const Uuid().v4(),
+        text: userMessage,
+        isUserMessage: false,
+        type: MessageType.text,
+      ),
+    );
+    _status = ChatStatus.idle;
+    notifyListeners();
   }
 
   void _handleResponse(GenerateContentResponse response) {

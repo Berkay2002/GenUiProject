@@ -51,6 +51,17 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController.addListener(() {
+      setState(() {
+        _hasText = _textController.text.isNotEmpty;
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -72,20 +83,34 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('GenChat'),
+        backgroundColor: theme.colorScheme.background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          'GenChat',
+          style: theme.textTheme.h3.copyWith(fontWeight: FontWeight.bold),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: theme.colorScheme.border, height: 1),
+        ),
       ),
       body: Column(
         children: [
@@ -96,6 +121,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 _scrollToBottom();
                 return ListView.builder(
                   controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
                   itemCount: chatProvider.messages.length,
                   itemBuilder: (context, index) {
                     final message = chatProvider.messages[index];
@@ -110,25 +139,86 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           if (Provider.of<ChatProvider>(context).status == ChatStatus.loading)
-            const LinearProgressIndicator(),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 8),
+                  Text("Thinking...", style: theme.textTheme.muted),
+                ],
+              ),
+            ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 24.0),
+            decoration: BoxDecoration(color: theme.colorScheme.background),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    decoration: const InputDecoration(
-                      hintText: 'Send a message...',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (text) => _sendMessage(),
+                ShadButton.outline(
+                  onPressed: () {
+                    // TODO: Implement attachment functionality
+                  },
+                  width: 48,
+                  height: 48,
+                  padding: EdgeInsets.zero,
+                  decoration: const ShadDecoration(shape: BoxShape.circle),
+                  child: Icon(
+                    Icons.add,
+                    color: theme.colorScheme.foreground,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 8.0),
-                IconButton(
-                  onPressed: _sendMessage,
-                  icon: const Icon(Icons.send),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ShadInput(
+                    controller: _textController,
+                    placeholder: const Text('Ask anything'),
+                    minLines: 1,
+                    maxLines: 5,
+                    onSubmitted: (text) => _sendMessage(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    trailing: _hasText
+                        ? GestureDetector(
+                            onTap: _sendMessage,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Icon(
+                                Icons.send,
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                          )
+                        : null,
+                    decoration: ShadDecoration(
+                      border: ShadBorder.all(
+                        color: theme.colorScheme.border,
+                        radius: BorderRadius.circular(30),
+                      ),
+                      focusedBorder: ShadBorder.all(
+                        width: 1,
+                        color: theme.colorScheme.border,
+                        radius: BorderRadius.circular(30),
+                      ),
+                      secondaryBorder: ShadBorder.all(
+                        width: 0,
+                        color: Colors.transparent,
+                      ),
+                      secondaryFocusedBorder: ShadBorder.all(
+                        width: 0,
+                        color: Colors.transparent,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
